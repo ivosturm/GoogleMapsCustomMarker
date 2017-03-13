@@ -1,7 +1,26 @@
-/*jslint white:true, nomen: true, plusplus: true */
-/*global mx, define, require, browser, devel, console, google, window */
+/*
 
-/* 22-04-2016 Patrick Verhoeven (Appronto) : fix deprecations for Mendix 6 */
+    GoogleMapsCustomMarker
+    ========================
+
+    @file      : googlemapscustommarker.js
+    @version   : 1.0
+    @author    : Ivo Sturm
+    @date      : 13-3-2017
+    @copyright : First Consulting
+    @license   : Apache v2
+
+    Documentation
+    ========================
+    This is an extension to the default Mendix Google Maps widget, based on version 6.0.1 of the AppStore. Extra features are: toggling between drag and drop mode, markerclustering for multiple markers and customizing the infowindow and marker.
+	
+	Also changed is the way the markers are being fetched from the database. This version works better with large amounts of markers, because it is not calling a recursive function as is done in the default Google Maps widget, resulting in 'exceeding stack-size' errors.
+	
+	Releases
+	========================
+	v1.0 initial release.
+
+*/
 
 define([
     'dojo/_base/declare',
@@ -412,7 +431,7 @@ define([
 						this.infowindow.close();
 					}	
 					var infowindow = new google.maps.InfoWindow({
-						content : 	'Overweg: <b>' +  obj.marker
+						content : 	this.infoWindowNameLabel + ': <b>' +  obj.marker
 						//+ this.colorAttr + ': <span style="background-color:' +  obj.color + ';width:12px;height:12px;display:inline-block"></span><br>'  
 						//+ this.markerDisplayAttr + ': <i>' + obj.marker +'</i>'
 					});
@@ -435,7 +454,7 @@ define([
 						
 						google.maps.event.addListener(infowindow, 'domready', dojo.hitch(this,function() { // infowindow object is loaded into DOM async via Google, hence need to target the domready event
 
-							infowindow.setContent('Overweg: <b>' +  obj.marker + '<br><br>' + guidBtn.outerHTML);
+							infowindow.setContent(this.infoWindowNameLabel + ': <b>' +  obj.marker + '<br><br>' + guidBtn.outerHTML);
 							var btn = document.getElementById(guidBtn.id);
 
 							on(btn,'click', dojo.hitch(this, function(e) {

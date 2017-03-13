@@ -82,6 +82,11 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <category>Interaction</category>
             <description>When set to true the on click microflow will directly be triggered in stead of via the infowindow.</description> 
         </property>
+        <property key="infoWindowNameLabel" type="string" defaultValue="Name">
+            <caption>Name Label</caption>
+            <category>Interaction</category>
+            <description>The label of the name popping up in the infowindow.</description> 
+        </property>
         <property key="mapHeight" type="integer" defaultValue="350">
             <caption>Height</caption>
             <category>Appearance</category>
@@ -273,4 +278,3 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
     </properties>
 </widget>
-
