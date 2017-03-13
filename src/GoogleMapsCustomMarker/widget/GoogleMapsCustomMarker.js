@@ -64,7 +64,6 @@ define([
 
 		if (this.toggleDraggingOpt){
 			var toggleMarkerNode = dom.input({ type : 'checkbox', 'class' : 'toggleCheckBox'});
-			var lbl =  '<label><b>Dragging enabled<b></label>';
 			
 			var toggleDiv = dom.div({ 'class': 'toggleDiv' }, toggleMarkerNode);
 			
@@ -397,9 +396,7 @@ define([
 					draggable : false,
 					opacity : opacity	
                 }),
-                self = this,
                 markerImageURL = null,
-                url = null;
 				objGUID = this._contextObj ? this._contextObj.getGuid() : null;
 
             if (id) {
@@ -475,8 +472,7 @@ define([
 			google.maps.event.addListener(marker, 'dragend', lang.hitch(this, function (event){
 				
 				var newLat = event.latLng.lat(),
-					newLng = event.latLng.lng(),
-					validated = 0;
+					newLng = event.latLng.lng();
 				// get actual mxObject based on guid of dragged marker	
 				var mxObj = this._objects.filter(function( object ) {
 				  return object.getGuid() == obj.guid;
