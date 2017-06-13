@@ -196,6 +196,14 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
 				<attributeType name="String"/>
             </attributeTypes>
         </property>
+		<property key="formattedAddressAttr" type="attribute" entityProperty="mapEntity" required="false" isPath="optional" pathType="reference">
+            <caption>Formatted Address</caption>
+            <category>Data source</category>
+            <description>The formatted addres, given back by the Google GeoCoder when dragging.</description> 
+			<attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
         <property key="enumAttr" type="attribute" entityProperty="mapEntity" required="false" isPath="optional" pathType="reference">
             <caption>Enum attribute</caption>
             <category>Appearance</category>
@@ -278,3 +286,4 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
     </properties>
 </widget>
+

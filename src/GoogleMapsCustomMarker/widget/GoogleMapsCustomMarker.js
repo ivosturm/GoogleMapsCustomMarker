@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 1.0
+    @version   : 1.1
     @author    : Ivo Sturm
-    @date      : 13-3-2017
+    @date      : 12-6-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -18,7 +18,11 @@
 	
 	Releases
 	========================
-	v1.0 initial release.
+	v1.0 Initial release.
+	v1.1 Mendix 7 fix for dom.input not being supported in Client API anymore. Now supported via html template.
+		 Added formatted address functionality when dragging a marker
+		 Fix for retrieving objects from DB. Was sometimes triggered twice
+		 Fix for widget sometimes not working when object not committed yet
 
 */
 
@@ -35,8 +39,9 @@ define([
 	'dojo/_base/lang',
     'GoogleMapsCustomMarker/lib/googlemaps!', 
 	'dojo/text!GoogleMapsCustomMarker/widget/template/GoogleMaps.html',
-	'GoogleMapsCustomMarker/lib/markerclustererlibrary'
-], function (declare, dom, dojoDom, on,_WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, googleMaps, widgetTemplate) {
+	'GoogleMapsCustomMarker/lib/markerclustererlibrary',
+	'mendix/validator'
+], function (declare, dom, dojoDom, on,_WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, googleMaps, widgetTemplate,validator) {
     'use strict';
 
     return declare('GoogleMapsCustomMarker.widget.GoogleMapsCustomMarker', [_WidgetBase, _TemplatedMixin], {
@@ -55,31 +60,31 @@ define([
 		_splits	: {},
 		_refs : null,
 		_schema : [],
+		_infowindow: null,
+		_logNode: 'GoogleMapsCustomMarker widget: ',
 
         postCreate: function () {
-
+			
+			// load geocoder for reverse geocoding after dragging of marker
+			this.geocoder = new google.maps.Geocoder();
+			
             window[this.id + "_mapsCallback"] = lang.hitch(this, function () {
                 this._loadMap();
             });
-
-		if (this.toggleDraggingOpt){
-			var toggleMarkerNode = dom.input({ type : 'checkbox', 'class' : 'toggleCheckBox'});
-			
-			var toggleDiv = dom.div({ 'class': 'toggleDiv' }, toggleMarkerNode);
-			
-			var textNode = document.createElement("b");
-			textNode.innerHTML = "Dragging enabled";
-
-			toggleDiv.appendChild(textNode);
-			
-			on(toggleMarkerNode,'change', lang.hitch(this, function(e) {
-				this._toggleMarkerDragging(e);
-			}));
-			
-			this.domNode.appendChild(toggleDiv);
-			
-		}
-
+		
+			// if dragging enabled, add on click event to checkbox
+			if (this.toggleDraggingOpt){
+				
+				on(this.toggleInput,'change', lang.hitch(this, function(e) {
+					this._toggleMarkerDragging(e);
+				}));
+				
+			}
+			// if dragging disabled, do not show the toggle dragging checkbox
+			else {
+				this.domNode.removeChild(this.toggleNodeDiv);
+			}
+			// load the google map
             this._loadMap();
         },
 
@@ -91,6 +96,7 @@ define([
 			this._contextObj = obj;
             this._resetSubscriptions();
             if (this._googleMap) {
+
                 this._fetchMarkers();
                 google.maps.event.trigger(this._googleMap, 'resize');
             }
@@ -118,8 +124,8 @@ define([
 
                 this._handle = this.subscribe({
                     guid: this._contextObj.getGuid(),
-                    callback: lang.hitch(this, function (guid) {
-                        this._fetchMarkers();
+                    callback: lang.hitch(this, function (guid) {;
+                        this.parseObjects(this._refreshMap,[ this._contextObj ]);
                     })
                 });
             }
@@ -156,13 +162,16 @@ define([
 			}
 			
 			this._googleMap = new google.maps.Map(this.mapContainer, mapOptions);
+			
 
-            this._fetchMarkers();
 
         },
 
         _fetchMarkers: function () {
-            if (this.gotocontext) {
+
+			this._markersArr = [];
+			// 20170613 - Added check whether no context object is available. Pan to context was not properly working.
+            if (this.gotocontext & !this._contextObj) {
                 this._goToContext();
             } else {
                 if (this.updateRefresh) {
@@ -182,6 +191,7 @@ define([
 
         _refreshMap: function (objs,contextObjs) {
 			var self;
+
 			if (contextObjs){
 				self = contextObjs;
 			} else {
@@ -192,7 +202,8 @@ define([
             var panPosition = self._defaultPosition;
             var validCount = 0;
 		
-            dojoArray.forEach(objs, function (obj) {
+            dojoArray.forEach(objs, lang.hitch(this,function (obj) {
+
                 self._addMarker(obj);
 
                 var position = self._getLatLng(obj);
@@ -203,14 +214,12 @@ define([
                     panPosition = position;
                 } else {
 					
-                    console.error(self.id + ": " + "Incorrect coordinates (" + obj.get(self.latAttr) +
+                    console.error(this._logNode + self.id + ": " + "Incorrect coordinates (" + obj.get(self.latAttr) +
                                   "," + obj.get(self.lngAttr) + ")");
 					console.dir(self);
                 }
 				
-
-            });
-			
+            }));
 
             if (validCount < 2) {
                 self._googleMap.setZoom(self.lowestZoom);
@@ -227,6 +236,7 @@ define([
         },
 
         _fetchFromDB: function () {
+
             var xpath = '//' + this.mapEntity + this.xpathConstraint;
 			
 			this._schema = [];
@@ -236,7 +246,8 @@ define([
 			this.loadSchema(this.latAttr, 'lat');
 			this.loadSchema(this.lngAttr, 'lng');
 			this.loadSchema(this.colorAttr, 'color');
-			this.loadSchema(this.enumAttr, 'enum')
+			this.loadSchema(this.formattedAddressAttr, 'address');
+			this.loadSchema(this.enumAttr, 'enum');
 			
 			// With empty _schema whole object is being pushed, this is a temporary fix
 			if (this._schema.length == 0){
@@ -256,7 +267,7 @@ define([
                     callback: dojo.hitch(this, this.processObjectsList)
                 });
             } else if (!this._contextObj && (xpath.indexOf('[%CurrentObject%]') > -1)) {
-                console.warn('No context for xpath, not fetching.');
+                console.warn(this._logNode + 'No context for xpath, not fetching.');
             } else {
                 mx.data.get({
                     xpath: xpath,
@@ -287,10 +298,11 @@ define([
 			}
 		}, 
 		processObjectsList : function (objectsArr) {
-			
+
 			this.parseObjects(this._refreshMap,objectsArr);
 			
 			if (this.enableMarkerClusterer && this._markersArr.length > 1){
+
 				 var markerClustererOpts = {
 					gridSize: this.MCGridSize,
 					maxZoom: this.MCMaxZoom,
@@ -315,14 +327,15 @@ define([
 				newObj['lat'] = this.checkRef(objs[i], 'lat', this.latAttr);
 				newObj['lng'] = this.checkRef(objs[i], 'lng', this.lngAttr);
 				newObj['color'] = this.checkRef(objs[i], 'color', this.colorAttr);
+				newObj['address'] = this.checkRef(objs[i], 'address', this.formattedAddressAttr);
 				newObj['enum'] = this.checkRef(objs[i], 'enum', this.enumAttr);
 				newObj['guid'] = objs[i].getGuid();						
 				newObjs.push(newObj);
 			}	
 			if (this.consoleLogging){
-					console.log('the MendixObjects retrieved from the database:');
+					console.log(this._logNode + 'the MendixObjects retrieved from the database:');
 					console.dir(objs);
-					console.log('the objects used for displaying on the map:');
+					console.log(this._logNode + 'the objects used for displaying on the map:');
 					console.dir(newObjs);
 			}
 			if (callback && typeof(callback) == "function"){
@@ -341,6 +354,7 @@ define([
 			}
 		},		
         _fetchFromCache: function () {
+			console.log('fetching from cache');
             var self = this,
                 cached = false,
                 bounds = new google.maps.LatLngBounds();
@@ -364,9 +378,9 @@ define([
             });
 
             if (!cached) {
+
                 this._fetchFromDB();
             }
-			console.log('bounds from cache');
 
         },
 
@@ -424,8 +438,8 @@ define([
 			
 			if (!this.disableInfoWindow){
 				google.maps.event.addListener(marker, "click", dojo.hitch(this, function() {
-					if (this.infowindow){
-						this.infowindow.close();
+					if (this._infowindow){
+						this._infowindow.close();
 					}	
 					var infowindow = new google.maps.InfoWindow({
 						content : 	this.infoWindowNameLabel + ': <b>' +  obj.marker
@@ -435,7 +449,7 @@ define([
 					
 					infowindow.open(this._googleMap, marker);
 					
-					this.infowindow = infowindow;
+					this._infowindow = infowindow;
 					
 					if (this.onClickMarkerMicroflow){
 						var objGuid = obj.guid;
@@ -455,7 +469,6 @@ define([
 							var btn = document.getElementById(guidBtn.id);
 
 							on(btn,'click', dojo.hitch(this, function(e) {
-								//console.log('clicked!');
 								this._execMf(this.onClickMarkerMicroflow, objGuid);
 							}));
 
@@ -468,7 +481,7 @@ define([
                 }));
             }			
 			// also add dragend eventlistener for when draggable is set to true
-				
+			
 			google.maps.event.addListener(marker, 'dragend', lang.hitch(this, function (event){
 				
 				var newLat = event.latLng.lat(),
@@ -477,8 +490,18 @@ define([
 				var mxObj = this._objects.filter(function( object ) {
 				  return object.getGuid() == obj.guid;
 				})[0];
+				
 				mxObj.set(this.latAttr,newLat.toFixed(8));
 				mxObj.set(this.lngAttr,newLng.toFixed(8));
+				
+				// added in v1.1: store the formatted address of the location if attribute selected in modeler
+				if (this.formattedAddressAttr){
+					try{
+						this._geocodePosition(marker,mxObj);
+					} catch (e){
+						console.error(this._logNode + e);
+					}	
+				}
 
 			}));
 			this._markersArr.push(marker);
@@ -502,7 +525,31 @@ define([
                 return null;
             }
         },
-
+		_geocodePosition: function (marker,mxObj) {
+			
+		  var position = marker.getPosition();
+		  
+		  this.geocoder.geocode({
+			latLng: position
+		  }, lang.hitch(this,function(responses) {
+			if (responses && responses.length > 0) {
+			  var formattedAddress = responses[0].formatted_address;
+			  mxObj.set(this.formattedAddressAttr, formattedAddress);
+			  marker.formatted_address = formattedAddress;
+			} else {
+			  marker.formatted_address = 'Cannot determine address at this location.';
+			}
+			if (this._infowindow){
+				this._infowindow.close();
+			}	
+			var infowindow = new google.maps.InfoWindow();	
+			this._infowindow = infowindow;
+			this._infowindow.setContent("<b>" + marker.formatted_address + "</b>" + "<br> Drag the marker to update the formatted address field!");
+			this._infowindow.open(this._googleMap, marker);			
+			
+		  }));
+		    
+		},
         _goToContext: function () {
             this._removeAllMarkers();
             if (this._googleMap && this._contextObj) {
@@ -511,7 +558,7 @@ define([
         },
         _execMf: function (mf, guid, cb) {
 			if (this.consoleLogging){
-				console.log(this.id + "_execMf");
+				console.log(this._logNode + "_execMf");
 			}
             if (mf && guid) {
                 mx.data.action({
@@ -528,9 +575,9 @@ define([
                             cb(obj);
                         }
                     }),
-                    error: function (error) {
-                        console.debug(error.description);
-                    }
+                    error: lang.hitch(this,function (error) {
+                        console.debug(this._logNode + error.description);
+                    })
                 }, this);
             }
         },
