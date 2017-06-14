@@ -44,10 +44,20 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <description>Determines the maximum zoomed-in level at which clustering is done.</description> 
         </property>        
 		<property key="toggleDraggingOpt" type="boolean" defaultValue="false">
-            <caption>Toggle dragging</caption>
+            <caption>Toggle Dragging</caption>
             <category>Marker</category>
-            <description>This decides whether an end-user will be able to toggle to draggable modus.</description> 
-        </property>        
+            <description>This decides whether an end-user will be able to toggle to draggable modus. By default a checkbox will be added below the map to toggle between draggable and non draggable modus.</description> 
+        </property>  
+		<property key="startTogglingChecked" type="boolean" defaultValue="false">
+            <caption>Start Draggable</caption>
+            <category>Marker</category>
+            <description>If Toggle Dragging is enabled, with this setting set to Yes, the checkbox for toggling dragging will be set to Yes when first displaying the map. Only applicable when Toggle Dragging is set to Yes</description> 
+        </property> 
+		<property key="hideTogglingDiv" type="boolean" defaultValue="false">
+            <caption>Hide Toggle Dragging</caption>
+            <category>Marker</category>
+            <description>When set to Yes, will hide the Toggle Dragging checkbox. Only applicable when Toggle Dragging is set to Yes and Start Draggable is set to Yes. </description> 
+        </property> 		
         <property key="mapEntity" type="entity" required="true">
             <caption>Objects</caption>
             <category>Data source</category>

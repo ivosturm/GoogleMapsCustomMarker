@@ -6,7 +6,7 @@
     @file      : googlemapscustommarker.js
     @version   : 1.1
     @author    : Ivo Sturm
-    @date      : 12-6-2017
+    @date      : 14-6-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -23,6 +23,7 @@
 		 Added formatted address functionality when dragging a marker
 		 Fix for retrieving objects from DB. Was sometimes triggered twice
 		 Fix for widget sometimes not working when object not committed yet
+		 Added options 'Start Draggable' and 'Hide Toggle Dragging'
 
 */
 
@@ -39,9 +40,8 @@ define([
 	'dojo/_base/lang',
     'GoogleMapsCustomMarker/lib/googlemaps!', 
 	'dojo/text!GoogleMapsCustomMarker/widget/template/GoogleMaps.html',
-	'GoogleMapsCustomMarker/lib/markerclustererlibrary',
-	'mendix/validator'
-], function (declare, dom, dojoDom, on,_WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, googleMaps, widgetTemplate,validator) {
+	'GoogleMapsCustomMarker/lib/markerclustererlibrary'
+], function (declare, dom, dojoDom, on,_WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, googleMaps, widgetTemplate) {
     'use strict';
 
     return declare('GoogleMapsCustomMarker.widget.GoogleMapsCustomMarker', [_WidgetBase, _TemplatedMixin], {
@@ -75,9 +75,20 @@ define([
 			// if dragging enabled, add on click event to checkbox
 			if (this.toggleDraggingOpt){
 				
+				// start with checkbox checked if set from Modeler
+				if  (this.startTogglingChecked){					
+					this.toggleInput.checked = true;
+				}
+				
+				// add toggling on click
 				on(this.toggleInput,'change', lang.hitch(this, function(e) {
 					this._toggleMarkerDragging(e);
 				}));
+				
+				// hide toggling div if set from Modeler
+				if  (this.hideTogglingDiv){
+					this.toggleNodeDiv.style.display = 'none';
+				}
 				
 			}
 			// if dragging disabled, do not show the toggle dragging checkbox
@@ -399,15 +410,20 @@ define([
 
         _addMarker: function (obj) {
 
+
 			var position = new google.maps.LatLng(obj.lat, obj.lng);
 			var objGUID; 
 			// needed to convert from string to number for Google
 			var opacity = Number(this.opacity);
+			
+			var draggable = false;
+			if (this.toggleInput && this.toggleInput.checked){
+				draggable = true;
+			}
             var id = this._contextObj ? this._contextObj.getGuid() : null,
                 marker = new google.maps.Marker({
                     position: position,
-                    map: this._googleMap,
-					draggable : false,
+					draggable : draggable,
 					opacity : opacity	
                 }),
                 markerImageURL = null,
@@ -504,13 +520,28 @@ define([
 				}
 
 			}));
+			
 			this._markersArr.push(marker);
+			
             if (!this._markerCache) {
                 this._markerCache = [];
             }
-            if (dojoArray.indexOf(this._markerCache, marker) === -1) {
-                this._markerCache.push(marker);
-            }
+				// filter operation gives back a list, but since only one marker should with same guid should be in the markercache, we can take the first
+				var oldMarker = this._markerCache.filter(lang.hitch(this,function(e) {
+					return e.id === marker.id;
+				}))[0];
+				
+				var index = this._markerCache.indexOf(oldMarker);
+
+				if (index > -1){
+					// existing marker, so delete old instance and remove from map
+					this._markerCache.splice(index, 1);
+					oldMarker.setMap(null);
+				}  
+					
+				marker.setMap(this._googleMap);
+				this._markerCache.push(marker);
+				
         },
 
         _getLatLng: function (obj) {
