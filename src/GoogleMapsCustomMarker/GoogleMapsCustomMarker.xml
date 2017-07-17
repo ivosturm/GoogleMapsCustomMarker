@@ -57,6 +57,11 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <caption>Hide Toggle Dragging</caption>
             <category>Marker</category>
             <description>When set to Yes, will hide the Toggle Dragging checkbox. Only applicable when Toggle Dragging is set to Yes and Start Draggable is set to Yes. </description> 
+        </property>
+		<property key="disableInfoWindowDragend" type="boolean" defaultValue="false">
+            <caption>Disable Infowindow Dragend</caption>
+            <category>Interaction</category>
+            <description>When set to 'Yes', no infowindow popup will be shown with the reverse geocoded address after dragging the marker. </description> 
         </property> 		
         <property key="mapEntity" type="entity" required="true">
             <caption>Objects</caption>
