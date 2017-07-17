@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 1.1.1
+    @version   : 1.2.0
     @author    : Ivo Sturm
-    @date      : 17-7-2017
+    @date      : 17-6-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -25,6 +25,7 @@
 		 Fix for widget sometimes not working when object not committed yet
 		 Added options 'Start Draggable' and 'Hide Toggle Dragging'
 	v1.1.1 Added disableInfoWindowDragging option to disable the infowindow popup after dragging.
+	v1.2 In case of reverse geocoding lacking results, the reason zero results are found is added in the pop-up
 
 */
 
@@ -563,13 +564,18 @@ define([
 		  
 		  this.geocoder.geocode({
 			latLng: position
-		  }, lang.hitch(this,function(responses) {
-			if (responses && responses.length > 0) {
-			  var formattedAddress = responses[0].formatted_address;
+		  }, lang.hitch(this,function(results,status) {
+			 if (this.consoleLogging){
+				console.log(this._logNode + "results: ");
+				console.dir(results);
+				console.log(this._logNode + "status: " + status);
+			 } 
+			if (status === 'OK' && results.length > 0) {
+			  var formattedAddress = results[0].formatted_address;
 			  mxObj.set(this.formattedAddressAttr, formattedAddress);
 			  marker.formatted_address = formattedAddress;
 			} else {
-			  marker.formatted_address = 'Cannot determine address at this location.';
+			  marker.formatted_address = 'Cannot determine address at this location for the following reason: ' + status;
 			}
 			if (!this.disableInfoWindowDragend){
 				if (this._infowindow){
