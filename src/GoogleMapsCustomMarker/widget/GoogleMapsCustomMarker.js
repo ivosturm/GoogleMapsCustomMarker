@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 1.1
+    @version   : 1.1.1
     @author    : Ivo Sturm
-    @date      : 14-6-2017
+    @date      : 17-7-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -24,6 +24,7 @@
 		 Fix for retrieving objects from DB. Was sometimes triggered twice
 		 Fix for widget sometimes not working when object not committed yet
 		 Added options 'Start Draggable' and 'Hide Toggle Dragging'
+	v1.1.1 Added disableInfoWindowDragging option to disable the infowindow popup after dragging.
 
 */
 
@@ -570,14 +571,15 @@ define([
 			} else {
 			  marker.formatted_address = 'Cannot determine address at this location.';
 			}
-			if (this._infowindow){
-				this._infowindow.close();
-			}	
-			var infowindow = new google.maps.InfoWindow();	
-			this._infowindow = infowindow;
-			this._infowindow.setContent("<b>" + marker.formatted_address + "</b>" + "<br> Drag the marker to update the formatted address field!");
-			this._infowindow.open(this._googleMap, marker);			
-			
+			if (!this.disableInfoWindowDragend){
+				if (this._infowindow){
+					this._infowindow.close();
+				}	
+				var infowindow = new google.maps.InfoWindow();	
+				this._infowindow = infowindow;
+				this._infowindow.setContent("<b>" + marker.formatted_address + "</b>" + "<br> Drag the marker to update the formatted address field!");
+				this._infowindow.open(this._googleMap, marker);			
+			}
 		  }));
 		    
 		},
