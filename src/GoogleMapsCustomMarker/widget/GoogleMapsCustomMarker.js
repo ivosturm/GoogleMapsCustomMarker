@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 1.2.1
+    @version   : 1.2.2
     @author    : Ivo Sturm
-    @date      : 1-8-2017
+    @date      : 3-8-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -27,6 +27,7 @@
 	v1.1.1 	Added disableInfoWindowDragging option to disable the infowindow popup after dragging.
 	v1.2 	In case of reverse geocoding lacking results, the reason zero results are found is added in the pop-up
 	v1.2.1 	Fix for API Key not sent in first API load
+	v1.2.2 	Fix for locations with XPath to dataview entity the widget is placed in
 
 */
 
@@ -233,8 +234,10 @@ define([
 			this._markersArr = [];
 			// 20170613 - Added check whether no context object is available. Pan to context was not properly working.
             if (this.gotocontext & !this._contextObj) {
+
                 this._goToContext();
-            } else if (this._contextObj){							
+            } else if (this._contextObj && this.xpathConstraint.indexOf("[id='[%CurrentObject%]']") > -1){	
+			
 				this.parseObjects( [this._contextObj] );		
 			} else {
                 if (this.updateRefresh) {
@@ -244,8 +247,10 @@ define([
                 } else {
                     if (this._markerCache) {
                         this._fetchFromCache();
+
                     } else {
                         this._fetchFromDB();
+
                     }
                 }
             }
@@ -275,6 +280,18 @@ define([
                 }
 				
             }));
+			 
+			if (validCount < 2) {
+                this._googleMap.setZoom(this.lowestZoom);
+                this._googleMap.panTo(panPosition);
+            } else {
+                this._googleMap.fitBounds(bounds);
+            }
+			
+			if (this._progressID) {
+				mx.ui.hideProgress(this._progressID);
+				this._progressID = null;
+            }
 			
 			if (this.enableMarkerClusterer && this._markersArr.length > 1){
 
@@ -287,25 +304,20 @@ define([
 
 				this._markerClusterer = new MarkerClusterer(this._googleMap, this._markersArr, markerClustererOpts);
 
+			} 
+			// needed to set map again if markers where still in cache. if they where in cache then map would be null.
+			else if (!this.enableMarkerClusterer && this._markersArr.length > 1){
+				for (var q = 0 ; q < this._markersArr.length ; q++ ){
+					this._markersArr[q].setMap(this._googleMap);
+				}
 			}
-			
-			if (validCount < 2) {
-                this._googleMap.setZoom(this.lowestZoom);
-                this._googleMap.panTo(panPosition);
-            } else {
-                this._googleMap.fitBounds(bounds);
-            }
-			
-			if (this._progressID) {
-				mx.ui.hideProgress(this._progressID);
-				this._progressID = null;
-            }
 
         },
         _fetchFromDB: function () {
 			if (this.consoleLogging){
 				console.log('fetching from db');
 			}
+
             var xpath = '//' + this.mapEntity + this.xpathConstraint;
 			
 			this._schema = [];
@@ -370,6 +382,7 @@ define([
 			}
 		}, 
 		parseObjects : function (objs) {
+
 			this._objects = objs;
 			var newObjs = [];
 			for (var i = 0; i < objs.length; i++) {
@@ -566,21 +579,21 @@ define([
             if (!this._markerCache) {
                 this._markerCache = [];
             }
-				// filter operation gives back a list, but since only one marker should with same guid should be in the markercache, we can take the first
-				var oldMarker = this._markerCache.filter(lang.hitch(this,function(e) {
-					return e.id === marker.id;
-				}))[0];
-				
-				var index = this._markerCache.indexOf(oldMarker);
+			// filter operation gives back a list, but since only one marker should with same guid should be in the markercache, we can take the first
+			var oldMarker = this._markerCache.filter(lang.hitch(this,function(e) {
+				return e.id === marker.id;
+			}))[0];
+			
+			var index = this._markerCache.indexOf(oldMarker);
 
-				if (index > -1){
-					// existing marker, so delete old instance and remove from map
-					this._markerCache.splice(index, 1);
-					oldMarker.setMap(null);
-				}  
-					
-				marker.setMap(this._googleMap);
-				this._markerCache.push(marker);
+			if (index > -1){
+				// existing marker, so delete old instance and remove from map
+				this._markerCache.splice(index, 1);
+				oldMarker.setMap(null);
+			}  
+				
+			marker.setMap(this._googleMap);
+			this._markerCache.push(marker);
 				
         },
         _getLatLng: function (obj) {
