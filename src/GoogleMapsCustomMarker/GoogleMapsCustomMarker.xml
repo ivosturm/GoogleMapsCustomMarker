@@ -117,6 +117,26 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <category>Appearance</category>
             <description>The border color around the Google Map.</description>
         </property>
+        <property key="showLines" type="boolean" defaultValue="false">
+            <caption>Show lines?</caption>
+            <category>Lines</category>
+            <description>If set to true, then lines between markers are shown. </description>
+        </property>
+        <property key="lineColor" type="string" required="false" defaultValue="">
+            <caption>Line Color</caption>
+            <category>Lines</category>
+            <description>The colour of the lines. Example: #FFFFFF (Not required)</description>
+        </property>
+        <property key="lineThickness" type="integer" defaultValue="3">
+            <caption>Line thickness</caption>
+            <category>Lines</category>
+            <description>(In pixel)</description> 
+        </property>
+        <property key="lineOpacity" type="string" defaultValue="1.0">
+            <caption>Line opacity</caption>
+            <category>Lines</category>
+            <description>The lines' opacity between 0.0 and 1.0. The value 0.0 means completely opaque / not visible. Defaults to 1.0.</description> 
+        </property>
         <property key="defaultLat" type="string" defaultValue="0.0">
             <caption>Default latitude</caption>
             <category>Behavior</category>
