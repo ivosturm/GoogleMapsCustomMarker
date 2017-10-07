@@ -261,12 +261,20 @@ define([
 			var bounds = new google.maps.LatLngBounds();
             var panPosition = this._defaultPosition;
             var validCount = 0;
+            var lineCoordinateList = new Array();
 						
             dojoArray.forEach(objs, lang.hitch(this,function (obj) {
 
                 this._addMarker(obj);
 
                 var position = this._getLatLng(obj);
+
+                if (this.showLines) {
+                    var valueOfLat = parseFloat(obj.lat.valueOf());
+                    var valueOfLng = parseFloat(obj.lng.valueOf());
+                    var lineCoordinate = {lat: valueOfLat, lng: valueOfLng};     
+                    lineCoordinateList.push(lineCoordinate);  
+                }      
 
                 if (position) {
                     bounds.extend(position);
@@ -281,6 +289,34 @@ define([
 				
             }));
 			 
+            if (this.showLines) {
+                if (typeof this.lineOpacity !== "undefined") {
+                    var lineOpacity = Number(this.lineOpacity);
+                } else {
+                    var lineOpacity = '1.0';
+                }
+                if (typeof this.lineColor !== "undefined" && this.lineColor) {
+                    var lineColor = this.lineColor;  
+                } else {
+                    var lineColor = "#0595db";
+                }
+                if (typeof this.lineThickness !== "undefined") {
+                    var lineThickness = this.lineThickness;
+                } else {
+                    var lineThickness = 3;
+                }
+
+                var linePath = new google.maps.Polyline({
+                  path: lineCoordinateList,
+                  geodesic: true,
+                  strokeColor: lineColor,
+                  strokeOpacity: lineOpacity,
+                  strokeWeight: lineThickness
+                });
+
+                linePath.setMap(this._googleMap);
+            }
+            
 			if (validCount < 2) {
                 this._googleMap.setZoom(this.lowestZoom);
                 this._googleMap.panTo(panPosition);
