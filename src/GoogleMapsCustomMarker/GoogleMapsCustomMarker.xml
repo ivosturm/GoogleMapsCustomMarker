@@ -118,11 +118,16 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <description>The border color around the Google Map.</description>
         </property>
         <property key="showLines" type="boolean" defaultValue="false">
-            <caption>Show lines?</caption>
+            <caption>Show Lines</caption>
             <category>Lines</category>
             <description>If set to true, lines between markers will be shown.</description>
         </property>
-        <property key="lineColor" type="string" required="false" defaultValue="#FFFFFF">
+        <property key="hideMarkers" type="boolean" defaultValue="false">
+            <caption>Hide Markers</caption>
+            <category>Lines</category>
+            <description>If set to true only the line -no markers-  will be shown.</description>
+        </property>
+        <property key="lineColor" type="string" required="false" defaultValue="#0595db">
             <caption>Line Color</caption>
             <category>Lines</category>
             <description>The hexadecimal color of the lines</description>
