@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 1.2.2
+    @version   : 2.0.0
     @author    : Ivo Sturm
-    @date      : 3-8-2017
+    @date      : 7-10-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -28,6 +28,7 @@
 	v1.2 	In case of reverse geocoding lacking results, the reason zero results are found is added in the pop-up
 	v1.2.1 	Fix for API Key not sent in first API load
 	v1.2.2 	Fix for locations with XPath to dataview entity the widget is placed in
+	v2.0	Added support for lines between markers. Also added the possibility to only plot the line without markers. Thanks to Shana Lai on GitHub for forking and sharing.
 
 */
 
@@ -261,18 +262,25 @@ define([
 			var bounds = new google.maps.LatLngBounds();
             var panPosition = this._defaultPosition;
             var validCount = 0;
-            var lineCoordinateList = new Array();
-						
+            var lineCoordinateList = [],
+			lineCoordinate = null,
+			valueOfLat = null,
+			valueOfLng = null;
+			
+			// create markers
             dojoArray.forEach(objs, lang.hitch(this,function (obj) {
-
-                this._addMarker(obj);
-
+				
+				if (this.hideMarkers && this.showLines){
+					// don't plot markers when showLines = true and hideMarkers = true. In all other scenarios do plot markers.
+				} else {
+					this._addMarker(obj);
+				}
                 var position = this._getLatLng(obj);
 
                 if (this.showLines) {
-                    var valueOfLat = parseFloat(obj.lat.valueOf());
-                    var valueOfLng = parseFloat(obj.lng.valueOf());
-                    var lineCoordinate = {lat: valueOfLat, lng: valueOfLng};     
+                    valueOfLat = parseFloat(obj.lat.valueOf());
+                    valueOfLng = parseFloat(obj.lng.valueOf());
+                    lineCoordinate = {lat: valueOfLat, lng: valueOfLng};     
                     lineCoordinateList.push(lineCoordinate);  
                 }      
 
@@ -289,29 +297,25 @@ define([
 				
             }));
 			 
+			// conditionally add a line between the markers baded on Modeler setting
             if (this.showLines) {
-                if (typeof this.lineOpacity !== "undefined") {
-                    var lineOpacity = Number(this.lineOpacity);
+                if (this.lineOpacity) {
+                    this.lineOpacity = Number(this.lineOpacity);
                 } else {
-                    var lineOpacity = '1.0';
+                    this.lineOpacity = 1.0;
                 }
-                if (typeof this.lineColor !== "undefined" && this.lineColor) {
-                    var lineColor = this.lineColor;  
-                } else {
-                    var lineColor = "#0595db";
+                if (!this.lineColor){
+                    this.lineColor = "#0595db";
                 }
-                if (typeof this.lineThickness !== "undefined") {
-                    var lineThickness = this.lineThickness;
-                } else {
-                    var lineThickness = 3;
+                if (!this.lineThickness){
+                    this.lineThickness = 3;
                 }
-
                 var linePath = new google.maps.Polyline({
                   path: lineCoordinateList,
                   geodesic: true,
-                  strokeColor: lineColor,
-                  strokeOpacity: lineOpacity,
-                  strokeWeight: lineThickness
+                  strokeColor: this.lineColor,
+                  strokeOpacity: this.lineOpacity,
+                  strokeWeight: this.lineThickness
                 });
 
                 linePath.setMap(this._googleMap);
