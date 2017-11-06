@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.0.0
+    @version   : 2.0.1
     @author    : Ivo Sturm
-    @date      : 7-10-2017
+    @date      : 11-6-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -29,7 +29,8 @@
 	v1.2.1 	Fix for API Key not sent in first API load
 	v1.2.2 	Fix for locations with XPath to dataview entity the widget is placed in
 	v2.0	Added support for lines between markers. Also added the possibility to only plot the line without markers. Thanks to Shana Lai on GitHub for forking and sharing.
-
+	v2.0.1	Bugfix for refresh of page when contextobject is not the mapEntity object.
+		Fix for when objects are retrieved from cache. Zoomlevel was not correctly set, resulting in too much zooming.
 */
 
 define([
@@ -99,8 +100,11 @@ define([
         update: function (obj, callback) {
 
             logger.debug(this.id + ".update");
-            this._contextObj = obj;
-            this._resetSubscriptions();
+			if (obj){
+				this._contextObj = obj;			
+            }
+			
+			this._resetSubscriptions();
 
             if (!google) {
                 console.warn("Google JSAPI is not loaded, exiting!");
@@ -183,8 +187,13 @@ define([
 
                 this._handle = this.subscribe({
                     guid: this._contextObj.getGuid(),
-                    callback: lang.hitch(this, function (guid) {;
-                        this.parseObjects([ this._contextObj ]);
+                    callback: lang.hitch(this, function (guid) {
+						// 20170611 - if contextobject is actual mapEntity object, no need to retrieve from DB again, since we have it already as context
+						if (this._contextObj && this.mapEntity === this._contextObj.getEntity()){
+							this.parseObjects([ this._contextObj ]);
+						} else {
+							this._loadMap();
+						}
                     })
                 });
             }
@@ -238,7 +247,7 @@ define([
 
                 this._goToContext();
             } else if (this._contextObj && this.xpathConstraint.indexOf("[id='[%CurrentObject%]']") > -1){	
-			
+
 				this.parseObjects( [this._contextObj] );		
 			} else {
                 if (this.updateRefresh) {
@@ -277,7 +286,7 @@ define([
 				}
                 var position = this._getLatLng(obj);
 
-                if (this.showLines) {
+                if (this.showLines && obj.lat && obj.lng) {
                     valueOfLat = parseFloat(obj.lat.valueOf());
                     valueOfLng = parseFloat(obj.lng.valueOf());
                     lineCoordinate = {lat: valueOfLat, lng: valueOfLng};     
@@ -459,6 +468,7 @@ define([
 			}
 		},		
         _fetchFromCache: function () {
+
 			if (this.consoleLogging){
 				console.log('fetching from cache');
 			}
@@ -481,8 +491,11 @@ define([
                 }
                 if (index === self._markerCache.length - 1) {
                     self._googleMap.fitBounds(bounds);
+					self._googleMap.setZoom(self.lowestZoom);
                 }
             });
+			
+
 
             if (!cached) {
 
