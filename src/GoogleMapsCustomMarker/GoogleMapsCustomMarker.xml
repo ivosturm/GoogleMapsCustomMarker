@@ -71,7 +71,18 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         <property key="xpathConstraint" type="entityConstraint" entityProperty="mapEntity" required="false">
             <caption>XPath Constraint</caption>
             <category>Data source</category>
-            <description>The XPath constraint on the objects.</description> 
+            <description>(Not applicable when using Get Objects Microflow) The XPath constraint on the objects.</description> 
+        </property>
+		<property key="getObjectsMF" type="microflow" required="false" entityProperty="getObjectsEntity">
+			<caption>Get Objects Microflow</caption>
+			<category>Data source</category>
+			<description>(Will overrule XPath) The microflow to retrieve the to be plotted objects with. Should have the Objects entity as output.</description>
+			<returnType type="Object" isList="true" entityProperty="mapEntity"/>
+		</property>
+        <property key="getObjectsEntity" type="entity" required="false">
+            <caption>Get Objects Context Entity</caption>
+            <category>Data source</category>
+            <description>(Only Applicable if Get Objects MF is selected).</description>
         </property>
         <property key="gotocontext" type="boolean" defaultValue="false">
             <caption>Pan to context</caption>
