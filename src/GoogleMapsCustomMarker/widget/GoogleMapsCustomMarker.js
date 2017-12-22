@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.0.1
+    @version   : 2.1.0
     @author    : Ivo Sturm
-    @date      : 11-6-2017
+    @date      : 20-12-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -30,7 +30,8 @@
 	v1.2.2 	Fix for locations with XPath to dataview entity the widget is placed in
 	v2.0	Added support for lines between markers. Also added the possibility to only plot the line without markers. Thanks to Shana Lai on GitHub for forking and sharing.
 	v2.0.1	Bugfix for refresh of page when contextobject is not the mapEntity object.
-		Fix for when objects are retrieved from cache. Zoomlevel was not correctly set, resulting in too much zooming.
+			Fix for when zooming to marker coming from cache, the default zoomlevel was not used, resulting in too high zoomlevel.
+	v2.1	Added Get Objects MF and Get Objects Context Entity to cater for retrieving the objects from a microflow instead of database.
 */
 
 define([
@@ -252,14 +253,14 @@ define([
 			} else {
                 if (this.updateRefresh) {
 
-                    this._fetchFromDB();
+                    this._fetchFromDBOrDS();
 					
                 } else {
                     if (this._markerCache) {
                         this._fetchFromCache();
 
                     } else {
-                        this._fetchFromDB();
+                        this._fetchFromDBOrDS();
 
                     }
                 }
@@ -362,57 +363,76 @@ define([
 			}
 
         },
-        _fetchFromDB: function () {
-			if (this.consoleLogging){
-				console.log('fetching from db');
-			}
+        _fetchFromDBOrDS: function () {
 
-            var xpath = '//' + this.mapEntity + this.xpathConstraint;
-			
-			this._schema = [];
-			this._refs = {};
-			
-			this.loadSchema(this.markerDisplayAttr, 'marker');
-			this.loadSchema(this.latAttr, 'lat');
-			this.loadSchema(this.lngAttr, 'lng');
-			this.loadSchema(this.colorAttr, 'color');
-			this.loadSchema(this.formattedAddressAttr, 'address');
-			this.loadSchema(this.enumAttr, 'enum');
-			
-			// With empty _schema whole object is being pushed, this is a temporary fix
-			if (this._schema.length == 0){
-				this._schema.push('createdDate');
-			}
-
-            this._removeAllMarkers();
-
-            if (this._contextObj) {
-                xpath = xpath.replace('[%CurrentObject%]', this._contextObj.getGuid());
-                mx.data.get({
-                    xpath: xpath,
-					filter      : {
-						attributes  : this._schema,
-						references	: this._refs
+			// if datasource microflow for objects is configured, use that to retrieve objects
+			if (this.getObjectsMF && this._contextObj){
+				if (this.consoleLogging){
+					console.log('fetching from datasource microflow!');
+				}
+				mx.ui.action(this.getObjectsMF,{
+					params: {
+						applyto: 'selection',
+						guids:[this._contextObj.getGuid()]
 					},
-                    callback: dojo.hitch(this, function(result){
-						this.parseObjects(result)
+					callback:  dojo.hitch(this,function(result) {
+						this.parseObjects(result);
+					}),	
+					error: dojo.hitch(this,function(error) {
+
+						console.log(error.description);
 					})
-                });
-            } else if (!this._contextObj && (xpath.indexOf('[%CurrentObject%]') > -1)) {
-                console.warn(this._logNode + 'No context for xpath, not fetching.');
-            } else {
-                mx.data.get({
-                    xpath: xpath,
-					filter      : {
-						attributes  : this._schema,
-						references	: this._refs
-					},
-                    callback:  dojo.hitch(this, function(result){
-						this.parseObjects(result)
-					})
-                });
-            }
-							
+				}, this);
+			} else {
+				if (this.consoleLogging){
+					console.log('fetching from database!');
+				}
+				var xpath = '//' + this.mapEntity + this.xpathConstraint;
+				
+				this._schema = [];
+				this._refs = {};
+				
+				this.loadSchema(this.markerDisplayAttr, 'marker');
+				this.loadSchema(this.latAttr, 'lat');
+				this.loadSchema(this.lngAttr, 'lng');
+				this.loadSchema(this.colorAttr, 'color');
+				this.loadSchema(this.formattedAddressAttr, 'address');
+				this.loadSchema(this.enumAttr, 'enum');
+				
+				// With empty _schema whole object is being pushed, this is a temporary fix
+				if (this._schema.length == 0){
+					this._schema.push('createdDate');
+				}
+
+				this._removeAllMarkers();
+
+				if (this._contextObj) {
+					xpath = xpath.replace('[%CurrentObject%]', this._contextObj.getGuid());
+					mx.data.get({
+						xpath: xpath,
+						filter      : {
+							attributes  : this._schema,
+							references	: this._refs
+						},
+						callback: dojo.hitch(this, function(result){
+							this.parseObjects(result)
+						})
+					});
+				} else if (!this._contextObj && (xpath.indexOf('[%CurrentObject%]') > -1)) {
+					console.warn(this._logNode + 'No context for xpath, not fetching.');
+				} else {
+					mx.data.get({
+						xpath: xpath,
+						filter      : {
+							attributes  : this._schema,
+							references	: this._refs
+						},
+						callback:  dojo.hitch(this, function(result){
+							this.parseObjects(result)
+						})
+					});
+				}
+			}				
         },
 		loadSchema : function (attr, name) {
 
@@ -499,7 +519,7 @@ define([
 
             if (!cached) {
 
-                this._fetchFromDB();
+                this._fetchFromDBOrDS();
             }
 
         },
