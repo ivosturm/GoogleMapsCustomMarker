@@ -65,23 +65,23 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property> 		
         <property key="mapEntity" type="entity" required="true">
             <caption>Objects</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The objects to show on the map.</description>
         </property>
         <property key="xpathConstraint" type="entityConstraint" entityProperty="mapEntity" required="false">
             <caption>XPath Constraint</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>(Not applicable when using Get Objects Microflow) The XPath constraint on the objects.</description> 
         </property>
 		<property key="getObjectsMF" type="microflow" required="false" entityProperty="getObjectsEntity">
 			<caption>Get Objects Microflow</caption>
-			<category>Data source</category>
+			<category>Data Source</category>
 			<description>(Will overrule XPath) The microflow to retrieve the to be plotted objects with. Should have the Objects entity as output.</description>
 			<returnType type="Object" isList="true" entityProperty="mapEntity"/>
 		</property>
         <property key="getObjectsEntity" type="entity" required="false">
             <caption>Get Objects Context Entity</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>(Only Applicable if Get Objects MF is selected).</description>
         </property>
         <property key="gotocontext" type="boolean" defaultValue="false">
@@ -91,7 +91,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
         <property key="markerDisplayAttr" type="attribute" required="false" entityProperty="mapEntity" isPath="optional" pathType="reference">
             <caption>Marker attribute</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The attribute that will be displayed in the marker info bubble. (Not required)</description>
             <attributeTypes>
                 <attributeType name="String"/> 
@@ -227,7 +227,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
         <property key="latAttr" type="attribute" entityProperty="mapEntity" required="true" isPath="optional" pathType="reference">
             <caption>Latitude attribute</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The latitude attribute.</description>
             <attributeTypes>
                 <attributeType name="Integer"/>
@@ -238,7 +238,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
         <property key="lngAttr" type="attribute" entityProperty="mapEntity" required="true" isPath="optional" pathType="reference">
             <caption>Longtitude attribute</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The longtitude attribute.</description>
             <attributeTypes>
                 <attributeType name="Integer"/>
@@ -249,7 +249,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
 		<property key="formattedAddressAttr" type="attribute" entityProperty="mapEntity" required="false" isPath="optional" pathType="reference">
             <caption>Formatted Address</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The formatted addres, given back by the Google GeoCoder when dragging.</description> 
 			<attributeTypes>
                 <attributeType name="String"/>
@@ -265,7 +265,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         </property>
 		<property key="colorAttr" type="attribute" entityProperty="mapEntity" required="true" isPath="optional" pathType="reference">
             <caption>Object color</caption>
-            <category>Data source</category>
+            <category>Data Source</category>
             <description>The hexadecimal color of the object. It should start with a '#'.</description> 
 			<attributeTypes>
                 <attributeType name="String"/>
@@ -293,6 +293,28 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
                 </property>
             </properties>
         </property>
+        <property key="legendAttributes" type="object" isList="true" required="false">
+            <caption>Legend filling</caption>
+            <category>Appearance</category>
+            <description>Select the colors used in the legend.</description>
+            <properties>
+                <property key="legendColor" type="string">
+                    <caption>Legend Color</caption>
+                    <category>Appearance</category>
+                    <description>The color of the marker. Will show the marker in the shape chosen by Symbol setting.</description>
+                </property>
+                <property key="legendCaption" type="string">
+                    <caption>Legend Caption</caption>
+                    <category>Appearance</category>
+                    <description>The caption for the legend entry.</description>
+                </property>
+            </properties>
+        </property>
+        <property key="enableLegend" type="boolean" defaultValue="false">
+            <caption>Legend</caption>
+            <category>Appearance</category>
+            <description>Enable/disable a legend on the Google Map. If color attribute is used will use those, if Enum based marker images are used, will use those.</description>
+        </property>		
 		 <property key="markerSymbol" type="enumeration" required="true" defaultValue="MARKER">
             <caption>Symbol</caption>
             <category>Marker</category>
@@ -304,6 +326,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
 				<enumerationValue key="BACKWARD_OPEN_ARROW">Backward open arrow</enumerationValue>
 				<enumerationValue key="FORWARD_CLOSED_ARROW">Forward closed arrow</enumerationValue>
 				<enumerationValue key="FORWARD_OPEN_ARROW">Forward open arrow</enumerationValue>
+				<enumerationValue key="STAR">Star</enumerationValue>
 			</enumerationValues>
 		</property>
 		 <property key="markerSize" type="enumeration" required="true" defaultValue="M">
