@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.1.0
+    @version   : 2.2.0
     @author    : Ivo Sturm
-    @date      : 20-12-2017
+    @date      : 28-12-2017
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -32,6 +32,7 @@
 	v2.0.1	Bugfix for refresh of page when contextobject is not the mapEntity object.
 			Fix for when zooming to marker coming from cache, the default zoomlevel was not used, resulting in too high zoomlevel.
 	v2.1	Added Get Objects MF and Get Objects Context Entity to cater for retrieving the objects from a microflow instead of database.
+	v2.2	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
 */
 
 define([
@@ -235,11 +236,105 @@ define([
 			
 			this._googleMap = new google.maps.Map(this.mapContainer, mapOptions);
 			
+			if (this.enableLegend){
+				this._createLegend();
+			}
+			
 			this._fetchMarkers();
 			
 			this._executeCallback(callback);
 
         },
+		_createLegend : function(){
+			
+			var legendItemSize = this.legendAttributes.length;
+			
+			var legendDiv = dom.create("div",{
+				id: 'googleMapsLegend',
+				style : {
+					backgroundColor : 'white',
+					cursor     : "pointer",
+					fontWeight : "bold",
+					height		: legendItemSize * 30,
+					border 		: "2px solid " + this.borderColor
+			}});		
+			
+			 if (this.markerImages.length > 1) {
+				 var markerImageURL = null;
+                dojoArray.forEach(this.markerImages, function (imageObj) {
+
+					markerImageURL = imageObj.enumImage;
+					
+					var imageDiv = dom.create("div",{});
+					var image = dom.create('img',
+						{
+							src : markerImageURL,
+							style : {
+								width : '25px',
+								height : '25px',
+								marginBottom : '5px'
+							}
+						}
+					)
+					var span = dom.create("text", imageObj.enumKey);
+					span.style.marginLeft = '5px';
+					imageDiv.appendChild(image);
+					imageDiv.appendChild(span);
+					legendDiv.appendChild(imageDiv);
+                    
+                });
+            } else {
+				
+				var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");	
+				legendDiv.appendChild(svg);
+				svg.setAttribute('width' ,'100');
+				svg.setAttribute('height' ,legendItemSize * 30);
+				for (var key = 0 ; key < legendItemSize ; key++) {
+					var type = this.legendAttributes[key];
+					var name = type.legendCaption;
+					var color = type.legendColor;
+					var icon = this.pinSymbol(color);
+
+					var path = document.createElementNS("http://www.w3.org/2000/svg","path");  
+					
+					path.setAttributeNS(null, "d", icon.path);
+							
+					path.setAttributeNS(null, "stroke", icon.strokeColor); 
+					path.setAttributeNS(null, "stroke-width", 1);  
+					path.setAttributeNS(null, "opacity", 1);  
+					path.setAttributeNS(null, "fill", icon.fillColor);
+							  
+					var text = document.createElementNS("http://www.w3.org/2000/svg","text");
+					text.textContent = name;  
+					text.setAttributeNS(null, "font-size","12px"); 
+					text.setAttributeNS(null, "font-weight","normal");
+					
+					switch(this.markerSymbol) {
+						case 'MARKER' :
+							path.setAttributeNS(null, "transform", "translate(10," + (key + 1) * 30 + ") scale(0.7)" );
+							text.setAttributeNS(null, "transform", "translate(25," + (((key + 1) * 30) - 10) + ")"); 						
+							break;
+						
+						case 'STAR' :
+							path.setAttributeNS(null, "transform", "translate(0," + (key) * 30 + ") scale(0.5)" ); 
+							text.setAttributeNS(null, "transform", "translate(30," + (key + 0.5) * 30 + ")"); 
+							break;
+						case 'CIRCLE' :
+							path.setAttributeNS(null, "transform", "translate(0," + (key) * 30 + ") scale(0.5)" ); 
+							text.setAttributeNS(null, "transform", "translate(30," + (key + 0.5) * 30 + ")"); 
+							break;
+					}
+					
+					svg.appendChild(path);
+					svg.appendChild(text);
+				  
+				}
+			}
+			
+
+			this._googleMap.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legendDiv);
+			
+		},
         _fetchMarkers: function () {
 
 			this._markersArr = [];
@@ -564,15 +659,25 @@ define([
             }
 
             if (this.markerImages.length > 1) {
-                dojoArray.forEach(this.markerImages, function (imageObj) {
-                    if (imageObj.enumKey === obj.enum) {
-                        markerImageURL = imageObj.enumImage;
-						marker.setIcon(window.mx.appUrl + markerImageURL);
-                    }
-                });
+				// if marker images are configured and object has enum set
+				if (obj.enum){
+					dojoArray.forEach(this.markerImages, function (imageObj) {
+						if (imageObj.enumKey === obj.enum) {
+							markerImageURL = imageObj.enumImage;
+							marker.setIcon(window.mx.appUrl + markerImageURL);
+						}
+					});
+				// if marker images are configured but object has no enum set
+				} else if (this.defaultIcon){
+					// if no enum is empty, set to default icon
+					markerImageURL = this.defaultIcon;
+					marker.setIcon(window.mx.appUrl + markerImageURL);
+				}
+			// if marker images are not configured but default icon is set
             } else if(this.defaultIcon) {
                 markerImageURL = this.defaultIcon;
 				marker.setIcon(window.mx.appUrl + markerImageURL);
+			// if no marker images are configured and no default icon is configured -> use color attribute
             } else {
 				markerImageURL = this.pinSymbol(obj.color);
 				marker.setIcon(markerImageURL);
@@ -771,22 +876,23 @@ define([
 					}		
 					break;
 				case 'CIRCLE' :
-					pathSymbol = google.maps.SymbolPath.CIRCLE;
+					pathSymbol =  "M 20, 20 m -15, 0 a 15,15 0 1,0 30,0 a 15,15 0 1,0 -30,0";
+  
 					switch(this.markerSize){
 						case 'L' :
-							symbolScale = 10;
+							symbolScale = 1;
 							break;
 						case 'M' :
-							symbolScale = 8;
+							symbolScale = 0.5;
 							break;
 						case 'S' :
-							symbolScale = 5;
+							symbolScale = 0.3;
 							break;
 						case 'XS' :
-							symbolScale = 3;
+							symbolScale = 0.2;
 							break;
 						case 'XXS' :
-							symbolScale = 1;
+							symbolScale = 0.1;
 							break;
 					}		
 					break;
@@ -870,6 +976,27 @@ define([
 							break;
 					}	
 					break;
+				case 'STAR' :
+					pathSymbol = 'M 25,1 31,18 49,18 35,29 40,46 25,36 10,46 15,29 1,18 19,18 z';
+					switch(this.markerSize){
+						case 'L' :
+							symbolScale = 1;
+							break;
+						case 'M' :
+							symbolScale = 0.5;
+							break;
+						case 'S' :
+							symbolScale = 0.3;
+							break;
+						case 'XS' :
+							symbolScale = 0.2;
+							break;
+						case 'XXS' :
+							symbolScale = 0.1;
+							break;
+					}	
+					break;
+					
 			}
 			
 			symbolOpt = {
