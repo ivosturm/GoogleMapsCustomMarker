@@ -4,7 +4,7 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.2.1
+    @version   : 2.2.0
     @author    : Ivo Sturm
     @date      : 28-12-2017
     @copyright : First Consulting
@@ -32,7 +32,7 @@
 	v2.0.1	Bugfix for refresh of page when contextobject is not the mapEntity object.
 			Fix for when zooming to marker coming from cache, the default zoomlevel was not used, resulting in too high zoomlevel.
 	v2.1	Added Get Objects MF and Get Objects Context Entity to cater for retrieving the objects from a microflow instead of database.
-	v2.2.1	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
+	v2.2.0	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
 */
 
 define([
