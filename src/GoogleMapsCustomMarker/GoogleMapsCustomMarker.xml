@@ -294,9 +294,9 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             </properties>
         </property>
         <property key="legendAttributes" type="object" isList="true" required="false">
-            <caption>Legend filling</caption>
+            <caption>Legend Filling</caption>
             <category>Appearance</category>
-            <description>Select the colors used in the legend.</description>
+            <description>Select the colors used in the legend. Not needed when Enum based marker images are used.</description>
             <properties>
                 <property key="legendColor" type="string">
                     <caption>Legend Color</caption>
@@ -313,7 +313,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
         <property key="enableLegend" type="boolean" defaultValue="false">
             <caption>Legend</caption>
             <category>Appearance</category>
-            <description>Enable/disable a legend on the Google Map. If color attribute is used will use those, if Enum based marker images are used, will use those.</description>
+            <description>Enable/disable a legend on the Google Map. If Enum based marker images are used, will use those, no need to fill the Legend Filling section. If the Color attribute is used, configure the Legend Filling below.</description>
         </property>		
 		 <property key="markerSymbol" type="enumeration" required="true" defaultValue="MARKER">
             <caption>Symbol</caption>
