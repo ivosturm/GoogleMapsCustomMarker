@@ -247,22 +247,24 @@ define([
         },
 		_createLegend : function(){
 			
-			var legendItemSize = this.legendAttributes.length;
+			var legendItemSize = 0;
 			
 			var legendDiv = dom.create("div",{
 				id: 'googleMapsLegend',
 				style : {
 					backgroundColor : 'white',
 					cursor     : "pointer",
-					fontWeight : "bold",
-					height		: legendItemSize * 30,
+					fontWeight : "bold",				
 					border 		: "2px solid " + this.borderColor
 			}});		
 			
+			// if Enum based marker images are used, base legend on those
 			 if (this.markerImages.length > 1) {
 				 var markerImageURL = null;
+				 legendItemSize = this.markerImages.length;
+				 
                 dojoArray.forEach(this.markerImages, function (imageObj) {
-
+					
 					markerImageURL = imageObj.enumImage;
 					
 					var imageDiv = dom.create("div",{});
@@ -284,11 +286,14 @@ define([
                     
                 });
             } else {
+				// else get legend attributes from Legend Filling set in Modeler
+				legendItemSize = this.legendAttributes.length;
 				
 				var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");	
 				legendDiv.appendChild(svg);
 				svg.setAttribute('width' ,'100');
 				svg.setAttribute('height' ,legendItemSize * 30);
+								
 				for (var key = 0 ; key < legendItemSize ; key++) {
 					var type = this.legendAttributes[key];
 					var name = type.legendCaption;
@@ -331,7 +336,8 @@ define([
 				}
 			}
 			
-
+			legendDiv.style.height = legendItemSize * 30;
+			
 			this._googleMap.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(legendDiv);
 			
 		},
