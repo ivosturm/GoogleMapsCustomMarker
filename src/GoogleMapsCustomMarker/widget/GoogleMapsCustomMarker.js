@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.2.0
+    @version   : 2.3.0
     @author    : Ivo Sturm
-    @date      : 28-12-2017
+    @date      : 12-01-2018
     @copyright : First Consulting
     @license   : Apache v2
 
