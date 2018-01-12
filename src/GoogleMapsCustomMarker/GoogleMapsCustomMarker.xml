@@ -98,10 +98,20 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             </attributeTypes>
         </property>
         <property key="onClickMarkerMicroflow" type="microflow" required="false" defaultValue="" entityProperty="mapEntity">
-            <caption>On Click microflow</caption>
+            <caption>On Click Microflow</caption>
             <category>Interaction</category>
-            <description>Microflow that will be exectuted when you click on a marker. Takes the entity of the Objects as input parameter</description>
+            <description>Microflow that will be executed when you click on a marker. Takes the entity of the Objects as input parameter</description>
             <returnType type="Void"></returnType>
+        </property>
+        <property key="onClickButttonLabel" type="string" defaultValue="Open">
+            <caption>On Click Button Label</caption>
+            <category>Interaction</category>
+            <description>The label of the button to appear in the infowindow.</description> 
+        </property>
+        <property key="onClickButttonClass" type="string" defaultValue="btn mx-button">
+            <caption>On Click Button Class</caption>
+            <category>Interaction</category>
+            <description>The classes on the button to appear in the infowindow. By default mendix default classes are added. Those can be stripped and/or your own class added.</description> 
         </property>
         <property key="disableInfoWindow" type="boolean" defaultValue="false">
             <caption>Disable infowindow on click</caption>
