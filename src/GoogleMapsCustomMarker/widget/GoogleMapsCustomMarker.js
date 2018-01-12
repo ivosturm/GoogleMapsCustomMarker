@@ -32,7 +32,8 @@
 	v2.0.1	Bugfix for refresh of page when contextobject is not the mapEntity object.
 			Fix for when zooming to marker coming from cache, the default zoomlevel was not used, resulting in too high zoomlevel.
 	v2.1	Added Get Objects MF and Get Objects Context Entity to cater for retrieving the objects from a microflow instead of database.
-	v2.2.0	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
+	v2.2	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
+	v2.3	Added button class and button label settings
 */
 
 define([
@@ -708,13 +709,23 @@ define([
 						var objGuid = obj.guid;
 						
 						var guidBtnOptions = {
-							"class" : "glyphicon glyphicon-share-alt",
 							"type" : "button",
+							"class" : this.onClickButttonClass,
 							"id" : objGuid,
 							"style" : "cursor : pointer"
 						};
 						
-						var guidBtn = dom.create("button", guidBtnOptions);
+						// create a span holding the alt glyphicon
+						var btnSpan = dom.create("span");
+						btnSpan.setAttribute("class","glyphicon glyphicon-share-alt");
+						
+						// create the custom text 
+						var btnText = dom.create("text");
+						
+						// create the button and add the span and text childs
+						var guidBtn = dom.create("button", guidBtnOptions, btnSpan, btnText);
+						btnText.textContent = this.onClickButttonLabel;
+						btnText.style.marginLeft = "4px";
 						
 						google.maps.event.addListener(infowindow, 'domready', dojo.hitch(this,function() { // infowindow object is loaded into DOM async via Google, hence need to target the domready event
 
