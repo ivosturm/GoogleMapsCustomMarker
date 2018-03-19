@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 2.3.0
+    @version   : 3.0.0
     @author    : Ivo Sturm
-    @date      : 12-01-2018
+    @date      : 19-3-2018
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -34,6 +34,7 @@
 	v2.1	Added Get Objects MF and Get Objects Context Entity to cater for retrieving the objects from a microflow instead of database.
 	v2.2	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
 	v2.3	Added button class and button label settings
+	v3.0	Added drawing of markers in single edit mode if new location without coordinates. Added SearchBox.
 */
 
 define([
@@ -48,7 +49,7 @@ define([
 	'dojo/_base/array', 
 	'dojo/_base/lang',
     'GoogleMapsCustomMarker/lib/jsapi', 
-	'dojo/text!GoogleMapsCustomMarker/widget/template/GoogleMaps.html',
+	'dojo/text!GoogleMapsCustomMarker/widget/template/GoogleMapsCustomMarker.html',
 	'GoogleMapsCustomMarker/lib/markerclustererlibrary'
 ], function (declare, dom, dojoDom, on,_WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, googleMaps, widgetTemplate) {
     'use strict';
@@ -117,7 +118,12 @@ define([
 
             if (!google.maps) {
                 logger.debug(this.id + ".update load Google maps");
-                var params = (this.apiAccessKey !== "") ? "key=" + this.apiAccessKey : "";
+                var params = null;
+				if (this.apiAccessKey !== "") {
+					params = "key=" + this.apiAccessKey + "&libraries=drawing,places";
+				} else {
+					params = "libraries=drawing,places";
+				}
                 if (google.loader && google.loader.Secure === false) {
                     google.loader.Secure = true;
                 }
@@ -237,10 +243,99 @@ define([
 			
 			this._googleMap = new google.maps.Map(this.mapContainer, mapOptions);
 			
+			// if drawing is enabled form Modeler, check if contextobject is empty marker object without coordinates. If so-> Enable, if not Disable.
+			if (this.enableDraw && (this._contextObj.getEntity() === this.mapEntity && this._contextObj.get(this.latAttr) == "" && this._contextObj.get(this.lngAttr) == "")){
+				this.drawingManager = new google.maps.drawing.DrawingManager({
+				  drawingMode: google.maps.drawing.OverlayType.MARKER,
+				  drawingControl: true,
+				  drawingControlOptions: {
+					position: google.maps.ControlPosition.TOP_CENTER,
+					drawingModes: ['marker']
+				  },
+				  markerOptions: {icon: this.pinSymbol("red")}
+				});
+				this.drawingManager.setMap(this._googleMap);
+				
+				google.maps.event.addListener(this.drawingManager, 'overlaycomplete', lang.hitch(this, function (event){
+					this.drawingManager.setDrawingMode(null);
+					
+					var newMarker;
+					var newLat;
+					var newLng;
+					if (event.type == google.maps.drawing.OverlayType.MARKER) {
+						newMarker = event.overlay;						
+						newLat = event.overlay.position.lat();
+						newLng = event.overlay.position.lng();
+						newMarker.setMap(null);
+						
+						var obj = {
+							lat : Number(newLat.toFixed(8)),
+							lng : Number(newLng.toFixed(8)),
+							color : 'red',
+							marker : 'New Marker'
+						};
+						
+						// if contextobject is location object not having lat and lng yet, it means a single edit mode, block drawing afterwards
+						if (this._contextObj.getEntity() === this.mapEntity && this._contextObj.get(this.latAttr) == "" && this._contextObj.get(this.lngAttr) == ""){
+							// disable drawing, allowing only 1 object
+							this.drawingManager.setOptions({
+								drawingControl: false
+							});
+							
+							this._contextObj.set(this.latAttr,Number(newLat.toFixed(8)));
+							this._contextObj.set(this.lngAttr,Number(newLng.toFixed(8)));
+							// set default color to red for new markers
+							var color = this._contextObj.get(this.colorAttr);
+							obj.color = color;						
+							// update obj with guid, so dragging works later on
+							obj.guid = this._contextObj.getGuid();
+							obj.id = obj.guid;
+							
+						} else {
+							mx.data.create({
+								entity: this.mapEntity,
+								callback: lang.hitch(this, function(mxObj) {
+
+									mxObj.set(this.latAttr,Number(newLat.toFixed(8)));
+									mxObj.set(this.lngAttr,Number(newLng.toFixed(8)));
+									// set default color to red for new markers
+									mxObj.set(this.colorAttr,'red');
+									
+									// update obj with guid, so dragging works later on
+									obj.guid = mxObj.getGuid();
+									obj.id = obj.guid;
+									
+									mx.data.commit({
+										mxobj: mxObj,
+										callback: lang.hitch(this,function() {
+											
+										}),
+										error: lang.hitch(this, function(e) {
+											console.error(this._logNode + "Could not commit object:", e);
+										})
+									});
+																						
+								}),
+								error: function(e) {
+									console.error(this._logNode + "Could not commit object:", e);
+								}
+							});
+						}
+					
+						this._addMarker(obj);
+
+					}
+				}));
+			}
+			
 			if (this.enableLegend){
 				this._createLegend();
 			}
-			
+			if (this.enableSearch){
+				this._createSearchBox();
+			} else {
+				this.searchBoxContainer.style.display =  'none';
+			}
 			this._fetchMarkers();
 			
 			this._executeCallback(callback);
@@ -661,7 +756,7 @@ define([
                 marker.id = id;
             }
 
-            if (this.markerDisplayAttr) {
+            if (this.markerDisplayAttr && obj.marker) {
                 marker.setTitle(obj.marker);
             }
 
@@ -754,14 +849,15 @@ define([
 				var mxObj = this._objects.filter(function( object ) {
 				  return object.getGuid() == obj.guid;
 				})[0];
-				
+								
 				mxObj.set(this.latAttr,newLat.toFixed(8));
 				mxObj.set(this.lngAttr,newLng.toFixed(8));
 				
 				// added in v1.1: store the formatted address of the location if attribute selected in modeler
 				if (this.formattedAddressAttr){
 					try{
-						this._geocodePosition(marker,mxObj);
+						// reverse geocode and do not commit
+						this._geocodePosition(marker,mxObj,false);
 					} catch (e){
 						console.error(this._logNode + e);
 					}	
@@ -783,8 +879,8 @@ define([
 
 			if (index > -1){
 				// existing marker, so delete old instance and remove from map
-				this._markerCache.splice(index, 1);
 				oldMarker.setMap(null);
+				this._markerCache.splice(index, 1);				
 			}  
 				
 			marker.setMap(this._googleMap);
@@ -803,7 +899,7 @@ define([
                 return null;
             }
         },
-		_geocodePosition: function (marker,mxObj) {
+		_geocodePosition: function (marker,mxObj,commit) {
 			
 		  var position = marker.getPosition();
 		  
@@ -821,6 +917,18 @@ define([
 			  marker.formatted_address = formattedAddress;
 			} else {
 			  marker.formatted_address = 'Cannot determine address at this location for the following reason: ' + status;
+			}
+			
+			if (commit){
+				mx.data.commit({
+					mxobj: mxObj,
+					callback: lang.hitch(this,function() {
+						
+					}),
+					error: lang.hitch(this, function(e) {
+						console.error(this._logNode + "Could not commit object:", e);
+					})
+				});
 			}
 			if (!this.disableInfoWindowDragend){
 				if (this._infowindow){
@@ -1038,6 +1146,49 @@ define([
 					}				
 				}
 				
+		},
+		_createSearchBox : function(){
+			
+			this.searchBoxContainer.style.width = this.searchBoxSize + 'px';
+			this.searchBoxContainer.placeholder = this.searchBoxPlaceholder;
+			
+			if (!this._searchBox){
+				
+				this._searchBox = new google.maps.places.SearchBox(this.searchBoxContainer);
+				
+				this._googleMap.controls[google.maps.ControlPosition.TOP_CENTER].push(this.searchBoxContainer);
+
+				// Bias the SearchBox results towards current map's viewport.
+				this._googleMap.addListener('bounds_changed', lang.hitch(this, function (){
+				  this._searchBox.setBounds(this._googleMap.getBounds());
+				}));
+				
+			  // Listen for the event fired when the user selects a prediction and retrieve
+				// more details for that place.
+				this._searchBox.addListener('places_changed',lang.hitch(this, function (){
+				  var places = this._searchBox.getPlaces();
+
+				  if (places.length == 0) {
+					return;
+				  }
+				// For each place, get the icon, name and location.
+				  var bounds = new google.maps.LatLngBounds();
+				  places.forEach(function(place) {
+					if (!place.geometry) {
+					  console.log("Returned place contains no geometry");
+					  return;
+					}
+
+					if (place.geometry.viewport) {
+					  // Only geocodes have viewport.
+					  bounds.union(place.geometry.viewport);
+					} else {
+					  bounds.extend(place.geometry.location);
+					}
+				  });
+				  this._googleMap.fitBounds(bounds);
+				}));
+			} 
 		},
 		_executeCallback: function (cb) {
             if (cb && typeof cb === "function") {
