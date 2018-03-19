@@ -47,7 +47,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <caption>Toggle Dragging</caption>
             <category>Marker</category>
             <description>This decides whether an end-user will be able to toggle to draggable modus. By default a checkbox will be added below the map to toggle between draggable and non draggable modus.</description> 
-        </property>  
+        </property>   
 		<property key="startTogglingChecked" type="boolean" defaultValue="false">
             <caption>Start Draggable</caption>
             <category>Marker</category>
@@ -58,6 +58,26 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <category>Marker</category>
             <description>When set to Yes, will hide the Toggle Dragging checkbox. Only applicable when Toggle Dragging is set to Yes and Start Draggable is set to Yes. </description> 
         </property>
+		<property key="enableDraw" type="boolean" defaultValue="false">
+            <caption>Enable Draw</caption>
+            <category>Interaction</category>
+            <description>This decides whether an extra drawingmanager will be available in the top of the map to toggle between drawing and dragging.</description> 
+        </property> 
+		<property key="enableSearch" type="boolean" defaultValue="false">
+            <caption>Enable Search Box</caption>
+            <category>Interaction</category>
+            <description>This decides whether an extra Search Box with auto complete will be available in the map.</description> 
+        </property> 
+		<property key="searchBoxSize" type="integer" defaultValue="300">
+            <caption>Search Box Size</caption>
+            <category>Interaction</category>
+            <description>(Only applicable when Search Box enabled) The size of the Search Box in px.</description> 
+        </property> 
+		<property key="searchBoxPlaceholder" type="string" defaultValue="Search Box">
+            <caption>Search Box Placeholder</caption>
+            <category>Interaction</category>
+            <description>(Only applicable when Search Box enabled) The placeholder text to appear in the Search Box.</description> 
+        </property> 
 		<property key="disableInfoWindowDragend" type="boolean" defaultValue="false">
             <caption>Disable Infowindow Dragend</caption>
             <category>Interaction</category>
