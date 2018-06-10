@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 3.0.0
+    @version   : 3.0.1
     @author    : Ivo Sturm
-    @date      : 19-3-2018
+    @date      : 10-6-2018
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -35,6 +35,7 @@
 	v2.2	Added legend and legend attributes to create a legend when having custom colored or enumeration based markers
 	v2.3	Added button class and button label settings
 	v3.0	Added drawing of markers in single edit mode if new location without coordinates. Added SearchBox.
+	v3.0.1	Fix from Jelte Lagendijk from Mendix that should ensure markerclustering also works on phonegap built app. Added mx.appUrl
 */
 
 define([
