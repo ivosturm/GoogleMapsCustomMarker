@@ -546,7 +546,7 @@ define([
 					gridSize: this.MCGridSize,
 					maxZoom: this.MCMaxZoom,
 					zoomOnClick: true,
-					imagePath: '../widgets/GoogleMapsCustomMarker/images/m'
+					imagePath: mx.appUrl + 'widgets/GoogleMapsCustomMarker/images/m'
 				};
 
 				this._markerClusterer = new MarkerClusterer(this._googleMap, this._markersArr, markerClustererOpts);
