@@ -83,7 +83,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <category>Interaction</category>
             <description>When set to 'Yes', no infowindow popup will be shown with the reverse geocoded address after dragging the marker. </description> 
         </property> 		
-        <property key="mapEntity" type="entity" required="true">
+        <property key="mapEntity" type="entity" required="true" allowNonPersistableEntities="true">
             <caption>Objects</caption>
             <category>Data Source</category>
             <description>The objects to show on the map.</description>
@@ -99,7 +99,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
 			<description>(Will overrule XPath) The microflow to retrieve the to be plotted objects with. Should have the Objects entity as output.</description>
 			<returnType type="Object" isList="true" entityProperty="mapEntity"/>
 		</property>
-        <property key="getObjectsEntity" type="entity" required="false">
+        <property key="getObjectsEntity" type="entity" required="false" allowNonPersistableEntities="true">
             <caption>Get Objects Context Entity</caption>
             <category>Data Source</category>
             <description>(Only Applicable if Get Objects MF is selected).</description>
