@@ -138,7 +138,7 @@ iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6
             <category>Interaction</category>
             <description>When set to true the on click microflow will directly be triggered in stead of via the infowindow.</description> 
         </property>
-        <property key="infoWindowNameLabel" type="string" defaultValue="Name">
+        <property key="infoWindowNameLabel" type="string" defaultValue="Name" required="false">
             <caption>Name Label</caption>
             <category>Interaction</category>
             <description>The label of the name popping up in the infowindow.</description> 
