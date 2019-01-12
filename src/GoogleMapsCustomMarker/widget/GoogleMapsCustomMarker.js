@@ -4,7 +4,7 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 3.0.1
+    @version   : 3.2.0
     @author    : Ivo Sturm
     @date      : 10-6-2018
     @copyright : First Consulting
@@ -36,6 +36,7 @@
 	v2.3	Added button class and button label settings
 	v3.0	Added drawing of markers in single edit mode if new location without coordinates. Added SearchBox.
 	v3.0.1	Fix from Jelte Lagendijk from Mendix that should ensure markerclustering also works on phonegap built app. Added mx.appUrl
+	v3.2.0	Removed deprecated store.caller parameter on mx.data.action. Made infowindownamelabel appear without : if left empty in Modeler. Fixed bug in zooming for single object.
 */
 
 define([
@@ -531,7 +532,13 @@ define([
             
 			if (validCount < 2) {
                 this._googleMap.setZoom(this.lowestZoom);
-                this._googleMap.panTo(panPosition);
+				// add minor timeout to make sure panning works correctly.
+				window.setTimeout(dojo.hitch(this,function(){
+					this._googleMap.panTo(panPosition)})
+					,100
+				);
+				
+
             } else {
                 this._googleMap.fitBounds(bounds);
             }
@@ -787,12 +794,18 @@ define([
 			}
 			
 			if (!this.disableInfoWindow){
+				var infoWindowName = "";
+				if (this.infoWindowNameLabel == "" || (!this.infoWindowNameLabel)){
+					infoWindowName = obj.marker;
+				} else {
+					infoWindowName = this.infoWindowNameLabel + ': <b>' +  obj.marker
+				}	
 				google.maps.event.addListener(marker, "click", dojo.hitch(this, function() {
 					if (this._infowindow){
 						this._infowindow.close();
 					}	
 					var infowindow = new google.maps.InfoWindow({
-						content : 	this.infoWindowNameLabel + ': <b>' +  obj.marker
+						content : 	infoWindowName
 						//+ this.colorAttr + ': <span style="background-color:' +  obj.color + ';width:12px;height:12px;display:inline-block"></span><br>'  
 						//+ this.markerDisplayAttr + ': <i>' + obj.marker +'</i>'
 					});
@@ -825,7 +838,7 @@ define([
 						
 						google.maps.event.addListener(infowindow, 'domready', dojo.hitch(this,function() { // infowindow object is loaded into DOM async via Google, hence need to target the domready event
 
-							infowindow.setContent(this.infoWindowNameLabel + ': <b>' +  obj.marker + '<br><br>' + guidBtn.outerHTML);
+							infowindow.setContent(infoWindowName + '<br><br>' + guidBtn.outerHTML);
 							var btn = document.getElementById(guidBtn.id);
 
 							on(btn,'click', dojo.hitch(this, function(e) {
@@ -960,9 +973,7 @@ define([
                         actionname: mf,
                         guids: [guid]
                     },
-                    store: {
-                        caller: this.mxform
-                    },
+                    origin: this.mxform,
                     callback: lang.hitch(this, function (obj) {
                         if (cb && typeof cb === "function") {
                             cb(obj);
