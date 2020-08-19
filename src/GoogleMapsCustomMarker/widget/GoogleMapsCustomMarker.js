@@ -4,9 +4,9 @@
     ========================
 
     @file      : googlemapscustommarker.js
-    @version   : 3.2.0
+    @version   : 3.2.1
     @author    : Ivo Sturm
-    @date      : 10-6-2018
+    @date      : 19-8-2020
     @copyright : First Consulting
     @license   : Apache v2
 
@@ -37,7 +37,8 @@
 	v3.0	Added drawing of markers in single edit mode if new location without coordinates. Added SearchBox.
 	v3.0.1	Fix from Jelte Lagendijk from Mendix that should ensure markerclustering also works on phonegap built app. Added mx.appUrl
 	v3.2.0	Removed deprecated store.caller parameter on mx.data.action. Made infowindownamelabel appear without : if left empty in Modeler. Fixed bug in zooming for single object.
-*/
+	v3.2.1	Changed mx.ui to mx.data as it has become deprecated within the Mendix Client API
+	*/
 
 define([
     'dojo/_base/declare',
@@ -544,7 +545,7 @@ define([
             }
 			
 			if (this._progressID) {
-				mx.ui.hideProgress(this._progressID);
+				mx.data.hideProgress(this._progressID);
 				this._progressID = null;
             }
 			
@@ -575,11 +576,13 @@ define([
 				if (this.consoleLogging){
 					console.log('fetching from datasource microflow!');
 				}
-				mx.ui.action(this.getObjectsMF,{
+				mx.data.action({
 					params: {
 						applyto: 'selection',
+						actionname: this.getObjectsMF,
 						guids:[this._contextObj.getGuid()]
 					},
+					origin: this.mxform,
 					callback:  dojo.hitch(this,function(result) {
 						this.parseObjects(result);
 					}),	
